@@ -1,4 +1,3 @@
-
 # Automate Oracle JRE 8 STIGS
 
 Applying the .NET STIG is definitely not straightforward. For many administrators it can take hours to fully implement on a single system. This script applies the required registry changes and modifies the machine.config file to implement FIPS and other controls as required.
@@ -19,6 +18,10 @@ Manual intervention is required for any .NET application or IIS Site.
 ## Sources:
 
 - [Microsoft .NET Framework Documentation](https://docs.microsoft.com/en-us/dotnet/framework/)
+
+## Download the required files
+
+You may download the required files from the [GitHub Repository](https://raw.githubusercontent.com/simeononsecurity/.NET-STIG-Script/)
 
 ## How to run the script
 
