@@ -3,6 +3,9 @@
 #https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_MS_DotNet_Framework_4-0_V1R9_STIG.zip
 #https://docs.microsoft.com/en-us/dotnet/framework/tools/caspol-exe-code-access-security-policy-tool
 
+#Continue on error
+$ErrorActionPreference= 'silentlycontinue'
+
 #Require elivation for script run
 #Requires -RunAsAdministrator
 Write-Output "Elevating priviledges for this process"
