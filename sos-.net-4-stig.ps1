@@ -11,6 +11,7 @@ $ErrorActionPreference= 'silentlycontinue'
 Write-Output "Elevating priviledges for this process"
 do {} until (Elevate-Privileges SeTakeOwnershipPrivilege)
 
+#Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification"){
     Remove-Item "HKLM:\Software\Microsoft\StrongName\Verification" -Recurse -Force
     Write-Host ".Net StrongName Verification Registry Removed"
