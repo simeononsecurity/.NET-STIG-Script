@@ -11,6 +11,10 @@ $ErrorActionPreference= 'silentlycontinue'
 Write-Output "Elevating priviledges for this process"
 do {} until (Elevate-Privileges SeTakeOwnershipPrivilege)
 
+$netframework32="C:\Windows\Microsoft.NET\Framework"
+$netframework64="C:\Windows\Microsoft.NET\Framework64"
+$netframeworks="$netframework32,$netframework64"
+
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification"){
     Remove-Item "HKLM:\Software\Microsoft\StrongName\Verification" -Recurse -Force
@@ -66,83 +70,44 @@ function MergeExtensionNode([string]$extensionNodeName)
 #https://stackoverflow.com/questions/4724290/powershell-run-command-from-scripts-directory
 $currentPath=Split-Path ((Get-Variable MyInvocation -Scope 0).Value).MyCommand.Path
 
-$netframework32="C:\Windows\Microsoft.NET\Framework"
-ForEach ($machineconfig in (Get-ChildItem -Recurse -Path $netframework32 machine.config).FullName){
+#Apply Machine.conf Configurations
+Foreach ($netframework in $netframeworks){
+    ForEach ($machineconfig in (Get-ChildItem -Recurse -Path $netframework machine.config).FullName){
     $machineconfigFile=$machineconfig
     $additionconfigFile="$currentPath\Files\machine.config"
     if ([System.IO.File]::Exists($machineconfigFile) -and [System.IO.File]::Exists($additionconfigFile))
-{
-    Write-Output "" "Processing $machineconfigFile with $additionconfigFile";
-    [System.Xml.XmlDocument]$machineconfig  = new-object System.Xml.XmlDocument;
-    [System.Xml.XmlDocument]$additionconfig = new-object System.Xml.XmlDocument;
-    $machineconfig.Load($machineconfigFile);
-    $additionconfig.Load($additionconfigFile);
-    if (($machineconfig -ne $null) -and ($additionconfig -ne $null))
     {
-        MergeExtensionNode "behaviorExtensions";
-        MergeExtensionNode "bindingElementExtensions";
-        # Overwrite machine.config with resulting document:
-        $machineconfig.Save($machineconfigFile);
-        Write-Host "Successful Murge"
-    }
-    else
+        Write-Output "" "Processing $machineconfigFile with $additionconfigFile";
+        [System.Xml.XmlDocument]$machineconfig  = new-object System.Xml.XmlDocument;
+        [System.Xml.XmlDocument]$additionconfig = new-object System.Xml.XmlDocument;
+        $machineconfig.Load($machineconfigFile);
+        $additionconfig.Load($additionconfigFile);
+        if (($machineconfig -ne $null) -and ($additionconfig -ne $null))
+        {
+            MergeExtensionNode "behaviorExtensions";
+            MergeExtensionNode "bindingElementExtensions";
+            # Overwrite machine.config with resulting document:
+            $machineconfig.Save($machineconfigFile);
+            Write-Host "Successful Murge"
+            }else
+            {
+                Write-Output "Some of the files could not be read, is not XML, or are empty.";
+                Exit 3;
+                }
+    }else
     {
-        Write-Output "Some of the files could not be read, is not XML, or are empty.";
-        Exit 3;
-    }
-}
-else
-{
-    if ([System.IO.File]::Exists($machineconfigFile) -eq $false)
-    {
-        Write-Output "machineConfigFile does not exist, or is not readable.";
-    }
-    if ([System.IO.File]::Exists($additionconfigFile -eq $false))
-    {
-        Write-Output "additionconfigFile does not exist, or is not readable.";
-    }
-    Exit 3;
-}
-}
-$netframework64="C:\Windows\Microsoft.NET\Framework64"
-ForEach ($machineconfig in (Get-ChildItem -Recurse -Path $netframework64 machine.config).FullName){
-    $machineconfigFile=$machineconfig
-    $additionconfigFile="$currentPath\Files\machine.config"
-    if ([System.IO.File]::Exists($machineconfigFile) -and [System.IO.File]::Exists($additionconfigFile))
-{
-    Write-Output "" "Processing $machineconfigFile with $additionconfigFile";
-    [System.Xml.XmlDocument]$machineconfig  = new-object System.Xml.XmlDocument;
-    [System.Xml.XmlDocument]$additionconfig = new-object System.Xml.XmlDocument;
-    $machineconfig.Load($machineconfigFile);
-    $additionconfig.Load($additionconfigFile);
-    if (($machineconfig -ne $null) -and ($additionconfig -ne $null))
-    {
-        MergeExtensionNode "behaviorExtensions";
-        MergeExtensionNode "bindingElementExtensions";
-        # Overwrite machine.config with resulting document:
-        $machineconfig.Save($machineconfigFile);
-        Write-Host "Successful Murge"
-    }
-    else
-    {
-        Write-Output "Some of the files could not be read, is not XML, or are empty.";
-        Exit 3;
+        if ([System.IO.File]::Exists($machineconfigFile) -eq $false)
+        {
+            Write-Output "machineConfigFile does not exist, or is not readable.";
+            }
+            if ([System.IO.File]::Exists($additionconfigFile -eq $false))
+            {
+                Write-Output "additionconfigFile does not exist, or is not readable.";
+                }
+                Exit 3;
+                }
     }
 }
-else
-{
-    if ([System.IO.File]::Exists($machineconfigFile) -eq $false)
-    {
-        Write-Output "machineConfigFile does not exist, or is not readable.";
-    }
-    if ([System.IO.File]::Exists($additionconfigFile -eq $false))
-    {
-        Write-Output "additionconfigFile does not exist, or is not readable.";
-    }
-    Exit 3;
-}
-}
-
 # .Net 32-Bit
 ForEach ($dotnet32version in (Get-ChildItem $netframework32 | ?{ $_.PSIsContainer }).Name){
     Write-Host ".Net 32-Bit $dotnet32version Is Installed"
@@ -161,6 +126,7 @@ ForEach ($dotnet32version in (Get-ChildItem $netframework32 | ?{ $_.PSIsContaine
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$dotnet32version\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1"
     }
 }
+# .Net 64-Bit
 ForEach ($dotnet64version in (Get-ChildItem $netframework64 | ?{ $_.PSIsContainer }).Name){
     Write-Host ".Net 64-Bit $dotnet64version Is Installed"
     .\$netframework64\$dotnet64version\caspol.exe -q -f -pp on 
@@ -181,10 +147,3 @@ ForEach ($dotnet64version in (Get-ChildItem $netframework64 | ?{ $_.PSIsContaine
 
 #Vul ID: V-30937	   	Rule ID: SV-40979r3_rule	   	STIG ID: APPNET0064	  
 #FINDSTR /i /s "NetFx40_LegacySecurityPolicy" c:\*.exe.config 
-
-
-
-
-
-
-
