@@ -15,7 +15,7 @@ $currentPath=Split-Path ((Get-Variable MyInvocation -Scope 0).Value).MyCommand.P
 
 $netframework32="C:\Windows\Microsoft.NET\Framework"
 $netframework64="C:\Windows\Microsoft.NET\Framework64"
-$netframeworks=($netframework32,$netframework64)
+$netframeworks=("$netframework32","$netframework64")
 
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification"){
