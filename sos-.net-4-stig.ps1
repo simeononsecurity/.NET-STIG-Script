@@ -139,7 +139,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
     }
 
-    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\
+    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\Machine.config
 }
 
 # .Net 64-Bit
@@ -165,7 +165,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
     }
 
-    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\
+    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\Machine.config
 }
 
 #Vul ID: V-30937	   	Rule ID: SV-40979r3_rule	   	STIG ID: APPNET0064	  
