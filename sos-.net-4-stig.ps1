@@ -110,7 +110,7 @@ Function Set-SecureConfig {
     $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration."system.net", $true)
     $MachineConfig.DocumentElement.AppendChild($NewNode) 
     #If you're doing a demo file, I recommend changing the name below to see a trial output   
-    $MachineConfig.Save("machine.config")
+    $MachineConfig.Save("$VersionPath\machine.config")
    
     Write-Host "Merge Complete"
 }
@@ -139,7 +139,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force
     }
 
-    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\machine.config
+    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\
 }
 
 # .Net 64-Bit
@@ -165,7 +165,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force
     }
 
-    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\machine.config
+    Set-SecureConfig -VersionPath $DotNetVersion.FullName\Config\
 }
 
 #Vul ID: V-30937	   	Rule ID: SV-40979r3_rule	   	STIG ID: APPNET0064	  
