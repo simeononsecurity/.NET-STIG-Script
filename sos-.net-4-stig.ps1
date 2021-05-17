@@ -45,18 +45,19 @@ This script needs admin privs
 The following checks .net to see if script has admin privs.  If it does not, it returns a msg on it and exits script
 #>
 $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-If(!($CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))){
+If (!($CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
     Write-Output "Script not executed with admin privs.  This is needed to properly run. `n Restart with admin privs"
     sleep 15
-    exit}
+    exit
+}
 
 #Gets current line script is on for troubleshooting purposes
 Function Get-CurrentLine {
-     $MyInvocation.ScriptLineNumber
+    $MyInvocation.ScriptLineNumber
 }
 
 #Continue on error
-$ErrorActionPreference= 'silentlycontinue'
+$ErrorActionPreference = 'silentlycontinue'
 
 <#
 change path to script location
@@ -65,16 +66,16 @@ $currentPath=Split-Path ((Get-Variable MyInvocation -Scope 0).Value).MyCommand.P
 Easier usage
 https://riptutorial.com/powershell/example/27231/-psscriptroot
 #>
-if((Get-Location).Path -NE $PSScriptRoot){Set-Location $PSScriptRoot}
+if ((Get-Location).Path -NE $PSScriptRoot) { Set-Location $PSScriptRoot }
 
 #Setting Netframework path variables
 $NetFramework32 = "C:\Windows\Microsoft.NET\Framework"
 $NetFramework64 = "C:\Windows\Microsoft.NET\Framework64"
-$NetFrameworks = @("$netframework32","$netframework64")
+$NetFrameworks = @("$netframework32", "$netframework64")
 
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 #Removing registry value
-If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification"){
+If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification") {
     Remove-Item "HKLM:\Software\Microsoft\StrongName\Verification" -Recurse -Force
     Write-Output ".Net StrongName Verification Registry Removed"
 }
@@ -116,22 +117,24 @@ Function Set-SecureConfig {
 
 
 # .Net 32-Bit
-ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)){
+ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     Write-Output ".Net 32-Bit $DotNetVersion Is Installed"
     #Starting .net exe/API to pass configuration Arguments
     Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-q -f -pp on" -WindowStyle Hidden
     Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-m -lg" -WindowStyle Hidden
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
-    If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass"){
+    If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force
-    }Else{
+    }
+    Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\" -Name ".NETFramework" -Force
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -PropertyType "DWORD" -Value "0" -Force
     }
     #Vul ID: V-81495	   	Rule ID: SV-96209r2_rule	   	STIG ID: APPNET0075	
-    If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\SchUseStrongCrypto"){
+    If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\SchUseStrongCrypto") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -Value "1" -Force
-    }Else{
+    }
+    Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework" -Name "$DotNetVersion" -Force
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force
     }
@@ -140,7 +143,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)){
 }
 
 # .Net 64-Bit
-ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)){  
+ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {  
     Write-Host ".Net 64-Bit $DotNetVersion Is Installed"
     #Starting .net exe/API to pass configuration Arguments
     Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-q -f -pp on" -WindowStyle Hidden
@@ -148,14 +151,16 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)){
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force
-    }Else {
+    }
+    Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\" -Name ".NETFramework" -Force
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -PropertyType "DWORD" -Value "0" -Force
     }
     #Vul ID: V-81495	   	Rule ID: SV-96209r2_rule	   	STIG ID: APPNET0075	
     If (Test-Path -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -Value "1" -Force
-    }Else {
+    }
+    Else {
         New-Item -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\" -Name "$DotNetVersion" -Force
         New-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force
     }
