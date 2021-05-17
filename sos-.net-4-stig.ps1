@@ -110,7 +110,7 @@ Function Set-SecureConfig {
     $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration."system.net", $true)
     $MachineConfig.DocumentElement.AppendChild($NewNode) 
     #If you're doing a demo file, I recommend changing the name below to see a trial output   
-    $MachineConfig.Save("$VersionPath\machine.config")
+    $MachineConfig.Save("machine.config")
    
     Write-Host "Merge Complete"
 }
