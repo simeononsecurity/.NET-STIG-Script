@@ -9,6 +9,7 @@ Applying the .NET STIG is definitely not straightforward. For many administrator
 ## Notes:
 
 This script can not and will not ever get the .NET stig to 100% compliance. 
+
 Manual intervention is required for any .NET application or IIS Site.
 
 ## STIGS/SRGs Applied:
@@ -17,7 +18,12 @@ Manual intervention is required for any .NET application or IIS Site.
 
 ## Sources:
 
+- [Add from one XML data to another existing XML file](http://www.maxtblog.com/2012/11/add-from-one-xml-data-to-another-existing-xml-file/)
+- [Caspol.exe (Code Access Security Policy Tool)](https://docs.microsoft.com/en-us/dotnet/framework/tools/caspol-exe-code-access-security-policy-tool)
 - [Microsoft .NET Framework Documentation](https://docs.microsoft.com/en-us/dotnet/framework/)
+- [PowerShell $PSScriptRoot](https://riptutorial.com/powershell/example/27231/-psscriptroot)
+- [PowerShell: Run command from script's directory](https://stackoverflow.com/questions/4724290/powershell-run-command-from-scripts-directory)
+- [Powershell XML importnode from different file](https://stackoverflow.com/questions/9944885/powershell-xml-importnode-from-different-file)
 
 ## Download the required files
 
