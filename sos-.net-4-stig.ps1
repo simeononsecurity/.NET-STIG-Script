@@ -1,13 +1,10 @@
 <#
-
 THIS TEMPLATE IS DERIVED FROM POWERSHELL ISE
     ctrl + J > cmdlet(advanced)
     This is normal powershell commenting for ease of understanding between powershell/.net users
-
 Additionally. If using powershell, please follow Verb-Noun nomenclature.  Real pain at first, but the more
 you use powershell, the more you will expect it and it quickly becomes a massive time saver. Put author info
 in header comments
-
 .Author
     SimeonOnSecurity - Microsoft .Net Framework 4 STIG Script
     https://github.com/simeononsecurity
@@ -97,21 +94,72 @@ Function Set-SecureConfig {
     #$MachineConfigPath = ".\Files\sample.config"
     #Write-Output "Still using SAMPLE.config. Adjust comments at line $(Get-CurrentLine)"
     #Actual machine
-    $MachineConfigPath = "$VersionPath"
+    #$MachineConfigPath = "$VersionPath"
+    #Sample/testing purposes line
+    $MachineConfigPath = "$($DotNetVersion.FullName)\Config\Machine.config"
     $MachineConfig = [xml](Get-Content $MachineConfigPath)
     
     #Apply Machine.conf Configurations
     #Pulled XML assistance from https://stackoverflow.com/questions/9944885/powershell-xml-importnode-from-different-file
     #Pulled more XML details from http://www.maxtblog.com/2012/11/add-from-one-xml-data-to-another-existing-xml-file/
     Write-Output "Begining work on $MachineConfigPath"
-        
+     
+     <#   Original code that appends to xml file every time it is run
     $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.runtime, $true)
     $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
     $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration."system.net", $true)
-    $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
+    $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Nulll
     #If you're doing a demo file, I recommend changing the name below to see a trial output   
     $MachineConfig.Save($MachineConfigPath)
+    #>
    
+
+   #Pulls data/comment line from xml nested child item  configuration > runtime > data
+   #  <!--Vul ID: V-30926 .... etc ... --!>
+   #$SecureMachineConfig.configuration | Select-Object -ExpandProperty ChildNodes
+   
+   #Pulling Secure.Machine.Config RUNTIME childnode and looking through its content and pulling the comment for comparison.
+   # Do out. Autmate each individual childnode
+   $SecureChildNodes = $SecureMachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
+   $MachineChildNodes = $MachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
+
+   $VulIDs = New-Object -TypeName "System.Collections.ArrayList"
+   foreach($Node in $SecureChildNodes){
+        $VulID = $SecureMachineConfig.configuration.$Node | Select-Object -ExpandProperty childnodes | Where-Object Data -GT 0 | Select-Object -ExpandProperty Data
+        $VulIDs.Add($VulID) | Out-Null
+   }
+
+   #Checking if each secure node is present in the XML file
+   ForEach($SecureChildNode in $SecureChildNodes){
+       #If it is not present, easy day. Add it in.
+       If ($SecureChildNode -notin $MachineChildNodes){
+            #Adding node from the secure.machine.config file and appending it to the XML file            
+            $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode, $true)
+            $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
+            #Saving changes to XML file
+            $MachineConfig.Save($MachineConfigPath)
+        #If it is present... we have to check if the node contains the elements we want.
+        } Else {
+            #Going through each node in secure.machine.config for comparison
+            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+            #Pull the Machine.config node and childnode and get the data properties for comparison
+            $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+
+            #I feel like there has got to be a better way to do this as we're three loops deep
+            foreach($SElement in $SecureElements){
+                #Comparing VulID pulled earlier against comments/data properties.  If it's not present we will add it in
+                If ($SElement -notin $MachineElements){
+                        #Can this line be used to add an element somewhere
+                        $NewNode = $MachineConfig.ImportNode(($SecureMachineConfig.configuration.$SecureChildNode.$SElement), $true)
+                        $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
+                        #Saving changes to XML file
+                        $MachineConfig.Save($MachineConfigPath)
+                    } Else {
+                    }#Need to test contents within... or just overwrite the one set on the machine.
+            }#Foreach Element within SecureElements
+        }#Else end for an if statement checking if the desired childnode is in the parent file
+   }#End of iterating through SecureChildNodes
+
     Write-Output "Merge Complete"
 }
 
