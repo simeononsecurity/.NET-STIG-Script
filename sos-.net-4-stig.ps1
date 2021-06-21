@@ -44,7 +44,7 @@ The following checks .net to see if script has admin privs.  If it does not, it 
 $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 If (!($CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
     Write-Output "Script not executed with admin privs.  This is needed to properly run. `n Restart with admin privs"
-    sleep 15
+    Start-Sleep 15
     exit
 }
 
@@ -105,7 +105,7 @@ Function Set-SecureConfig {
     #Pulled XML assistance from https://stackoverflow.com/questions/9944885/powershell-xml-importnode-from-different-file
     #Pulled more XML details from http://www.maxtblog.com/2012/11/add-from-one-xml-data-to-another-existing-xml-file/
     #>
-    Write-Output "Begining work on $MachineConfigPath"
+    Write-Output "Begining work on $MachineConfigPath" -ForegroundColor Green -BackgroundColor Black
    
    <#
    #Pulling Secure.Machine.Config RUNTIME childnode and looking through its content and pulling the comment for comparison.
@@ -126,9 +126,9 @@ Function Set-SecureConfig {
         #If it is present... we have to check if the node contains the elements we want.
         } Else {
             #Going through each node in secure.machine.config for comparison
-            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
             #Pull the Machine.config node and childnode and get the data properties for comparison
-            $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+            $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
 
             #I feel like there has got to be a better way to do this as we're three loops deep
             foreach($SElement in $SecureElements){
@@ -182,7 +182,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
 
 # .Net 64-Bit
 ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {  
-    Write-Host ".Net 64-Bit $DotNetVersion Is Installed"
+    Write-Host ".Net 64-Bit $DotNetVersion Is Installed" -ForegroundColor Green -BackgroundColor Black
     #Starting .net exe/API to pass configuration Arguments
     Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
     Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden
