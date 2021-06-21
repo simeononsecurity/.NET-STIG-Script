@@ -1,10 +1,4 @@
 <#
-THIS TEMPLATE IS DERIVED FROM POWERSHELL ISE
-    ctrl + J > cmdlet(advanced)
-    This is normal powershell commenting for ease of understanding between powershell/.net users
-Additionally. If using powershell, please follow Verb-Noun nomenclature.  Real pain at first, but the more
-you use powershell, the more you will expect it and it quickly becomes a massive time saver. Put author info
-in header comments
 .Author
     SimeonOnSecurity - Microsoft .Net Framework 4 STIG Script
     https://github.com/simeononsecurity
@@ -14,25 +8,11 @@ in header comments
     Contributor
         Leatherman
 .Synopsis
-   Short description
+   Configures .NET DoD STIG Requirements
 .DESCRIPTION
-   Long description
+   Configures .NET DoD STIG Requirements
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
-.INPUTS
-   Inputs to this cmdlet (if any)
-.OUTPUTS
-   Output from this cmdlet (if any)
-.NOTES
-   General notes
-.COMPONENT
-   The component this cmdlet belongs to
-.ROLE
-   The role this cmdlet belongs to
-.FUNCTIONALITY
-   The functionality that best describes this cmdlet
+   .\sos-.net-4-stig.ps1
 #>
 
 <#
