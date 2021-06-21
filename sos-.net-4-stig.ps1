@@ -168,8 +168,8 @@ Function Set-SecureConfig {
 ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     Write-Output ".Net 32-Bit $DotNetVersion Is Installed"
     #Starting .net exe/API to pass configuration Arguments
-    Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-q -f -pp on" -WindowStyle Hidden
-    Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-m -lg" -WindowStyle Hidden
+    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
+    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force | Out-Null
@@ -194,8 +194,8 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
 ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {  
     Write-Host ".Net 64-Bit $DotNetVersion Is Installed"
     #Starting .net exe/API to pass configuration Arguments
-    Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-q -f -pp on" -WindowStyle Hidden
-    Start-Process $DotNetVersion.FullName\caspol.exe -ArgumentList "-m -lg" -WindowStyle Hidden
+    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
+    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force | Out-Null
