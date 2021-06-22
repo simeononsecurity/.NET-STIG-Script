@@ -112,7 +112,7 @@ Function Set-SecureConfig {
             
             #If it is present... we have to check if the node contains the elements we want.
             #Going through each node in secure.machine.config for comparison
-            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | 
+            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
             MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
             #Pull the Machine.config node and childnode and get the data properties for comparison
             $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
