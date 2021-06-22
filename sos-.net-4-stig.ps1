@@ -63,7 +63,7 @@ two foreach loops as it has to touch every config file in each
 #>
 Function Set-SecureConfig {
     param (
-        $VersionPath
+        $VersionPath,
         $SecureMachineConfigPath
     )
     
