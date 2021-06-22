@@ -101,7 +101,7 @@ Function Set-SecureConfig {
        } Elseif($MachineConfig.configuration.$SecureChildNode -eq "") {
             #Turns out element sometimes is present but entirely empty. If that is the case we need to remove it
             # and add what we want         
-            $MachineConfig.configuration.ChildNodes | where name -eq $SecureChildNode | foreach{$MachineConfig.configuration.RemoveChild($_)} | Out-Null
+            $MachineConfig.configuration.ChildNodes | Where-Object name -eq $SecureChildNode | ForEach-Object{$MachineConfig.configuration.RemoveChild($_)} | Out-Null
             $MachineConfig.Save($MachineConfigPath)
             #Adding node from the secure.machine.config file and appending it to the XML file            
             $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode, $true)
@@ -112,10 +112,10 @@ Function Set-SecureConfig {
             
             #If it is present... we have to check if the node contains the elements we want.
             #Going through each node in secure.machine.config for comparison
-            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
-            MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
+            MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
             #Pull the Machine.config node and childnode and get the data properties for comparison
-            $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select -Expandproperty Name
+            $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
 
             #I feel like there has got to be a better way to do this as we're three loops deep
             foreach($SElement in $SecureElements){
