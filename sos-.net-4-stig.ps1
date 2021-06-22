@@ -56,10 +56,6 @@ If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification") {
     Write-Output ".Net StrongName Verification Registry Removed"
 }
 
-#Getting Secure Machine.Configs
-$SecureMachineConfigPath = ".\Files\secure.machine.config"
-$SecureMachineConfig = [xml](Get-Content $SecureMachineConfigPath)
-
 <#
 Creating secure configuration Function. It needs to be called in the
 two foreach loops as it has to touch every config file in each
@@ -68,8 +64,14 @@ two foreach loops as it has to touch every config file in each
 Function Set-SecureConfig {
     param (
         $VersionPath
+        $SecureMachineConfigPath
     )
     
+    #Getting Secure Machine.Configs
+    $SecureMachineConfigPath = $null
+    #$SecureMachineConfigPath = ".\Files\secure.machine.config"
+    $SecureMachineConfig = [xml](Get-Content $SecureMachineConfigPath)
+
     $MachineConfig = $Null
     [system.gc]::Collect()
     $MachineConfigPath = "$VersionPath"
@@ -84,31 +86,33 @@ Function Set-SecureConfig {
     #>
     Write-Host "Begining work on $MachineConfigPath" -ForegroundColor Green -BackgroundColor Black
    
-   # Do out. Automate each individual childnode for infinite nested. Currently only goes one deep
-   $SecureChildNodes = $SecureMachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
-   $MachineChildNodes = $MachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
+    # Do out. Automate each individual childnode for infinite nested. Currently only goes one deep
+    $SecureChildNodes = $SecureMachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
+    $MachineChildNodes = $MachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
 
 
-   #Checking if each secure node is present in the XML file
-   ForEach($SecureChildNode in $SecureChildNodes){
-       #If it is not present, easy day. Add it in.
-       If ($SecureChildNode -notin $MachineChildNodes){
+    #Checking if each secure node is present in the XML file
+    ForEach ($SecureChildNode in $SecureChildNodes) {
+        #If it is not present, easy day. Add it in.
+        If ($SecureChildNode -notin $MachineChildNodes) {
             #Adding node from the secure.machine.config file and appending it to the XML file
             $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode, $true)
             $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
             #Saving changes to XML file
             $MachineConfig.Save($MachineConfigPath)
-       } Elseif($MachineConfig.configuration.$SecureChildNode -eq "") {
+        }
+        Elseif ($MachineConfig.configuration.$SecureChildNode -eq "") {
             #Turns out element sometimes is present but entirely empty. If that is the case we need to remove it
             # and add what we want         
-            $MachineConfig.configuration.ChildNodes | Where-Object name -eq $SecureChildNode | ForEach-Object{$MachineConfig.configuration.RemoveChild($_)} | Out-Null
+            $MachineConfig.configuration.ChildNodes | Where-Object name -eq $SecureChildNode | ForEach-Object { $MachineConfig.configuration.RemoveChild($_) } | Out-Null
             $MachineConfig.Save($MachineConfigPath)
             #Adding node from the secure.machine.config file and appending it to the XML file            
             $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode, $true)
             $MachineConfig.DocumentElement.AppendChild($NewNode) | Out-Null
             #Saving changes to XML file
             $MachineConfig.Save($MachineConfigPath)
-       } Else {
+        }
+        Else {
             
             #If it is present... we have to check if the node contains the elements we want.
             #Going through each node in secure.machine.config for comparison
@@ -118,42 +122,45 @@ Function Set-SecureConfig {
             $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
 
             #I feel like there has got to be a better way to do this as we're three loops deep
-            foreach($SElement in $SecureElements){
+            foreach ($SElement in $SecureElements) {
                 #Comparing Element pulled earlier against Machine Elements.  If it's not present we will add it in
-                If ($SElement -notin $MachineElements){
-                        #Adding in element that is not present
-                    If($SecureMachineConfig.configuration.$SecureChildNode.$SElement -NE ""){
+                If ($SElement -notin $MachineElements) {
+                    #Adding in element that is not present
+                    If ($SecureMachineConfig.configuration.$SecureChildNode.$SElement -NE "") {
                         $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
                         #Saving changes to XML file
                         $MachineConfig.Save($MachineConfigPath)
-                    } Else {
+                    }
+                    Else {
                         #This is for when the value declared is empty.
                         $NewNode = $MachineConfig.CreateElement("$SElement")                     
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
                         #Saving changes to XML file
                         $MachineConfig.Save($MachineConfigPath)
                     }
-                } Else {
-                  $OldNode = $MachineConfig.SelectSingleNode("//$SElement")
-                  $MachineConfig.configuration.$SecureChildNode.RemoveChild($OldNode) | Out-Null
-                  $MachineConfig.Save($MachineConfigPath)
-                  $NewNode = ""
-                  $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
-                  If($NewNode -EQ ""){
-                    $NewElement = $MachineConfig.CreateElement("$SElement")
-                    $MachineConfig.configuration.$SecureChildNode.AppendChild($NewElement) | Out-Null
-                  } Else {
-                    $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
-                  }
-                  #Saving changes to XML file
-                  $MachineConfig.Save($MachineConfigPath)               
+                }
+                Else {
+                    $OldNode = $MachineConfig.SelectSingleNode("//$SElement")
+                    $MachineConfig.configuration.$SecureChildNode.RemoveChild($OldNode) | Out-Null
+                    $MachineConfig.Save($MachineConfigPath)
+                    $NewNode = ""
+                    $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
+                    If ($NewNode -EQ "") {
+                        $NewElement = $MachineConfig.CreateElement("$SElement")
+                        $MachineConfig.configuration.$SecureChildNode.AppendChild($NewElement) | Out-Null
+                    }
+                    Else {
+                        $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
+                    }
+                    #Saving changes to XML file
+                    $MachineConfig.Save($MachineConfigPath)               
                 }#End else
             }#Foreach Element within SecureElements
         }#Else end for an if statement checking if the desired childnode is in the parent file
-   }#End of iterating through SecureChildNodes
+    }#End of iterating through SecureChildNodes
    
-   Write-Host "Merge Complete"
+    Write-Host "Merge Complete"
 }
 
 
@@ -180,7 +187,32 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
     }
 
-    Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config"
+    <# Source for specifying configs for specific .Net versions
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/enforcefipspolicy-element (2.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/loadfromremotesources-element (4.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/netfx40-legacysecuritypolicy-element (4.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
+    #>
+    Try {
+        If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            If (($DotNetVersion -Split "v" )[1] -ge 4) {
+                Write-Host ".Net version 4 or higher... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+            }
+            Else {
+                Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
+            }
+        }
+        Else {
+            Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+        }
+    }
+    Catch {
+        Write-Host "Error merging config file" -ForegroundColor Red -BackgroundColor Black
+    }
+    
 }
 
 # .Net 64-Bit
@@ -206,7 +238,31 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
         New-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
     }
 
-    Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config"
+    <# Source for specifying configs for specific .Net versions
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/enforcefipspolicy-element (2.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/loadfromremotesources-element (4.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/netfx40-legacysecuritypolicy-element (4.0 or higher)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
+    https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
+    #>
+    Try {
+        If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            If (($DotNetVersion -Split "v" )[1] -ge 4) {
+                Write-Host ".Net version 4 or higher... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+            }
+            Else {
+                Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
+            }
+        }
+        Else {
+            Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+        }
+    }
+    Catch {
+        Write-Host "Error merging config file" -ForegroundColor Red -BackgroundColor Black
+    }
 }
 
 #Vul ID: V-30937	   	Rule ID: SV-40979r3_rule	   	STIG ID: APPNET0064	  
