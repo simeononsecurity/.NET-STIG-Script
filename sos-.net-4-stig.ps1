@@ -47,7 +47,7 @@ if ((Get-Location).Path -NE $PSScriptRoot) { Set-Location $PSScriptRoot }
 #Setting Netframework path variables
 $NetFramework32 = "C:\Windows\Microsoft.NET\Framework"
 $NetFramework64 = "C:\Windows\Microsoft.NET\Framework64"
-$NetFrameworks = @("$netframework32", "$netframework64")
+#$NetFrameworks = @("$netframework32", "$netframework64")
 
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 #Removing registry value
@@ -85,7 +85,7 @@ Function Set-SecureConfig {
     #Pulled XML assistance from https://stackoverflow.com/questions/9944885/powershell-xml-importnode-from-different-file
     #Pulled more XML details from http://www.maxtblog.com/2012/11/add-from-one-xml-data-to-another-existing-xml-file/
     #>
-    Write-Host "Begining work on $MachineConfigPath" -ForegroundColor White -BackgroundColor Black
+    Write-Host "Begining work on $MachineConfigPath..." -ForegroundColor White -BackgroundColor Black
    
     # Do out. Automate each individual childnode for infinite nested. Currently only goes one deep
     $SecureChildNodes = $SecureMachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
@@ -169,23 +169,33 @@ Function Set-SecureConfig {
 ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     Write-Host ".Net 32-Bit $DotNetVersion Is Installed" -ForegroundColor Green -BackgroundColor Black
     #Starting .net exe/API to pass configuration Arguments
-    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
-    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden
+    If (Test-Path "$($DotNetVersion.FullName)\caspol.exe") {
+        Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
+        Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden 
+        # Comment lines above and uncomment lines below to see output
+        #Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -NoNewWindow
+        #Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -NoNewWindow
+        Write-Host "Set CAS policy for $DotNetVersion 32-Bit" -ForegroundColor White -BackgroundColor Black
+    }
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force | Out-Null
+        Write-Host "Disabled Strong Name Bypass for $DotNetVersion 32-Bit" -ForegroundColor White -BackgroundColor Black
     }
     Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\" -Name ".NETFramework" -Force | Out-Null
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -PropertyType "DWORD" -Value "0" -Force | Out-Null
+        Write-Host "Disabled Strong Name Bypass for $DotNetVersion 32-Bit" -ForegroundColor White -BackgroundColor Black
     }
     #Vul ID: V-81495	   	Rule ID: SV-96209r2_rule	   	STIG ID: APPNET0075	
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\SchUseStrongCrypto") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -Value "1" -Force | Out-Null
+        Write-Host "Enforced Strong Crypto for $DotNetVersion 32-Bit" -ForegroundColor White -BackgroundColor Black
     }
     Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework" -Name "$DotNetVersion" -Force | Out-Null
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
+        Write-Host "Enforced Strong Crypto for $DotNetVersion 32-Bit" -ForegroundColor White -BackgroundColor Black
     }
 
     <# Source for specifying configs for specific .Net versions
@@ -197,7 +207,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     #>
     If (($DotNetVersion -Split "v" )[1] -ge 2) {
         If (($DotNetVersion -Split "v" )[1] -ge 4) {
-            Write-Host ".Net version 4 or higher... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+            Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
             Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
         }
         Else {
@@ -206,7 +216,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
         }
     }
     Else {
-        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
     }
 }
 
@@ -214,23 +224,33 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
 ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {  
     Write-Host ".Net 64-Bit $DotNetVersion Is Installed" -ForegroundColor Green -BackgroundColor Black
     #Starting .net exe/API to pass configuration Arguments
-    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
-    Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden
+    If (Test-Path "$($DotNetVersion.FullName)\caspol.exe") {
+        Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -WindowStyle Hidden
+        Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -WindowStyle Hidden 
+        # Comment lines above and uncomment lines below to see output
+        #Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-q -f -pp on" -NoNewWindow
+        #Start-Process "$($DotNetVersion.FullName)\caspol.exe" -ArgumentList "-m -lg" -NoNewWindow
+        Write-Host "Set CAS policy for $DotNetVersion 64-Bit" -ForegroundColor White -BackgroundColor Black
+    }
     #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
     If (Test-Path -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\AllowStrongNameBypass") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -Value "0" -Force | Out-Null
+        Write-Host "Disabled Strong Name Bypass for $DotNetVersion 64-Bit" -ForegroundColor White -BackgroundColor Black
     }
     Else {
         New-Item -Path "HKLM:\SOFTWARE\Microsoft\" -Name ".NETFramework" -Force | Out-Null
         New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework\" -Name "AllowStrongNameBypass" -PropertyType "DWORD" -Value "0" -Force | Out-Null
+        Write-Host "Disabled Strong Name Bypass for $DotNetVersion 64-Bit" -ForegroundColor White -BackgroundColor Black
     }
     #Vul ID: V-81495	   	Rule ID: SV-96209r2_rule	   	STIG ID: APPNET0075	
     If (Test-Path -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\") {
         Set-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -Value "1" -Force | Out-Null
+        Write-Host "Enforced Strong Crypto for $DotNetVersion 64-Bit" -ForegroundColor White -BackgroundColor Black
     }
     Else {
         New-Item -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\" -Name "$DotNetVersion" -Force | Out-Null
         New-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\$DotNetVersion\" -Name "SchUseStrongCrypto" -PropertyType "DWORD" -Value "1" -Force | Out-Null
+        Write-Host "Enforced Strong Crypto for $DotNetVersion 64-Bit" -ForegroundColor White -BackgroundColor Black
     }
 
     <# Source for specifying configs for specific .Net versions
@@ -242,7 +262,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
     #>
     If (($DotNetVersion -Split "v" )[1] -ge 2) {
         If (($DotNetVersion -Split "v" )[1] -ge 4) {
-            Write-Host ".Net version 4 or higher... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+            Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
             Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
         }
         Else {
@@ -251,7 +271,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
         }
     }
     Else {
-        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
     }
 }
 
