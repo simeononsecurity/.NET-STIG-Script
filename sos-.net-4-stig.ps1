@@ -6,7 +6,7 @@
     https://docs.microsoft.com/en-us/dotnet/framework/tools/caspol-exe-code-access-security-policy-tool
     
     Contributor
-        Leatherman
+        Leatherman - Leatherman-Security
 .Synopsis
    Configures .NET DoD STIG Requirements
 .DESCRIPTION
@@ -67,20 +67,21 @@ Function Set-SecureConfig {
         $SecureMachineConfigPath
     )
     
-    #Getting Secure Machine.Configs
-    $SecureMachineConfigPath = $null
-    [system.gc]::Collect()
-    #$SecureMachineConfigPath = ".\Files\secure.machine.config"
-    $SecureMachineConfig = [xml](Get-Content $SecureMachineConfigPath)
-
+    #Declaration and error prevention
+    $SecureMachineConfig = $Null
     $MachineConfig = $Null
-    [system.gc]::Collect()
-    $MachineConfigPath = "$VersionPath"
+    [system.gc]::Collect() 
+    
+    #Getting Secure Machine.Configs
+    $SecureMachineConfig = [xml](Get-Content $SecureMachineConfigPath)
+        
     #Write-Host "Still using test path at $(Get-CurrentLine)"
     #$MachineConfigPath = "C:\Users\hiden\Desktop\NET-STIG-Script-master\Files\secure.machine - Copy.config"
-    #$MachineConfigPath = "$($NetFramework64.FullName)\Config\Machine.config"
+    $MachineConfigPath = "$VersionPath"
     $MachineConfig = [xml](Get-Content $MachineConfigPath)
-    
+    #Ensureing file is closed
+    [IO.File]::OpenWrite((Resolve-Path $MachineConfigPath).Path).close()
+
     <#Apply Machine.conf Configurations
     #Pulled XML assistance from https://stackoverflow.com/questions/9944885/powershell-xml-importnode-from-different-file
     #Pulled more XML details from http://www.maxtblog.com/2012/11/add-from-one-xml-data-to-another-existing-xml-file/
@@ -117,8 +118,7 @@ Function Set-SecureConfig {
             
             #If it is present... we have to check if the node contains the elements we want.
             #Going through each node in secure.machine.config for comparison
-            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
-            MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
+            $SecureElements = $SecureMachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name        
             #Pull the Machine.config node and childnode and get the data properties for comparison
             $MachineElements = $MachineConfig.configuration.$SecureChildNode | Get-Member | Where-Object MemberType -Match "^Property" | Where-object Name -notmatch "#comment" | Select-Object -Expandproperty Name
 
@@ -145,17 +145,18 @@ Function Set-SecureConfig {
                     $OldNode = $MachineConfig.SelectSingleNode("//$SElement")
                     $MachineConfig.configuration.$SecureChildNode.RemoveChild($OldNode) | Out-Null
                     $MachineConfig.Save($MachineConfigPath)
-                    $NewNode = ""
-                    $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
-                    If ($NewNode -EQ "") {
+                    If ($SecureMachineConfig.configuration.$SecureChildNode.$SElement -EQ "") {
                         $NewElement = $MachineConfig.CreateElement("$SElement")
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewElement) | Out-Null
                     }
                     Else {
+                        $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
                     }
-                    #Saving changes to XML file
-                    $MachineConfig.Save($MachineConfigPath)               
+                #Ensuring file is not open.
+                
+                #Saving changes to XML file
+                $MachineConfig.Save($MachineConfigPath)               
                 }#End else
             }#Foreach Element within SecureElements
         }#Else end for an if statement checking if the desired childnode is in the parent file
@@ -205,19 +206,21 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
     #>
-    If (($DotNetVersion -Split "v" )[1] -ge 2) {
-        If (($DotNetVersion -Split "v" )[1] -ge 4) {
-            Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
-            Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+        If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            If (($DotNetVersion -Split "v" )[1] -ge 4) {
+                Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+            }
+            Else {
+                Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
+            }
         }
         Else {
-            Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
-            Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
-        }
-    }
-    Else {
-        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
-    }
+            Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
+        }#End dotnet version test
+    }#End testpath
 }
 
 # .Net 64-Bit
@@ -260,19 +263,21 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
     #>
-    If (($DotNetVersion -Split "v" )[1] -ge 2) {
-        If (($DotNetVersion -Split "v" )[1] -ge 4) {
-            Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
-            Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+        If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            If (($DotNetVersion -Split "v" )[1] -ge 4) {
+                Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
+            }
+            Else {
+                Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
+                Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
+            }
         }
         Else {
-            Write-Host ".Net version is less than 4... Continuing with v2.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
-            Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v2.config"
-        }
-    }
-    Else {
-        Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
-    }
+            Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
+        }#End .net version test
+    }#End testpath
 }
 
 #Vul ID: V-30937	   	Rule ID: SV-40979r3_rule	   	STIG ID: APPNET0064	  
