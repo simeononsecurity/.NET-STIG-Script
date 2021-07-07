@@ -4,9 +4,11 @@
     https://github.com/simeononsecurity
     https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_MS_DotNet_Framework_4-0_V1R9_STIG.zip
     https://docs.microsoft.com/en-us/dotnet/framework/tools/caspol-exe-code-access-security-policy-tool
+ 
+.Contributor
+    Leatherman - Leatherman-Security
+    https://github.com/Leatherman-Security
     
-    Contributor
-        Leatherman - Leatherman-Security
 .Synopsis
    Configures .NET DoD STIG Requirements
 .DESCRIPTION
@@ -15,10 +17,8 @@
 #>
 
 <#
-Require elivation for script run
-Requires -RunAsAdministrator
-This script needs admin privs
-The following checks .net to see if script has admin privs.  If it does not, it returns a msg on it and exits script
+This script requires admin privs. Use -RunAsAdministrator
+.net check on privs. If script does not have, it returns a message and exits.
 #>
 $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 If (!($CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))) {
@@ -27,27 +27,21 @@ If (!($CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Admini
     exit
 }
 
-#Gets current line script is on for troubleshooting purposes
-Function Get-CurrentLine {
-    $MyInvocation.ScriptLineNumber
-}
-
 #Continue on error
-$ErrorActionPreference = 'silentlycontinue'
+$ErrorActionPreference = 'SilentlyContinue'
 
 <#
 change path to script location
 https://stackoverflow.com/questions/4724290/powershell-run-command-from-scripts-directory
 $currentPath=Split-Path ((Get-Variable MyInvocation -Scope 0).Value).MyCommand.Path
-Easier usage
 https://riptutorial.com/powershell/example/27231/-psscriptroot
+$PSScriptRoot is easier usage 
 #>
 if ((Get-Location).Path -NE $PSScriptRoot) { Set-Location $PSScriptRoot }
 
 #Setting Netframework path variables
 $NetFramework32 = "C:\Windows\Microsoft.NET\Framework"
 $NetFramework64 = "C:\Windows\Microsoft.NET\Framework64"
-#$NetFrameworks = @("$netframework32", "$netframework64")
 
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 #Removing registry value
@@ -88,7 +82,7 @@ Function Set-SecureConfig {
     #>
     Write-Host "Begining work on $MachineConfigPath..." -ForegroundColor White -BackgroundColor Black
    
-    # Do out. Automate each individual childnode for infinite nested. Currently only goes one deep
+    # Do out. Automate each individual childnode for infinite nested. Currently only goes two deep
     $SecureChildNodes = $SecureMachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
     $MachineChildNodes = $MachineConfig.configuration | Get-Member | Where-Object MemberType -match "^Property" | Select-Object -ExpandProperty Name
 
@@ -153,7 +147,6 @@ Function Set-SecureConfig {
                         $NewNode = $MachineConfig.ImportNode($SecureMachineConfig.configuration.$SecureChildNode.$SElement, $true)
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
                     }
-                #Ensuring file is not open.
                 
                 #Saving changes to XML file
                 $MachineConfig.Save($MachineConfigPath)               
@@ -206,8 +199,12 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
     #>
+    
+    #Ensuring .net version has machine.config
     If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+        #.net Version testing.
         If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            #.net version testing.
             If (($DotNetVersion -Split "v" )[1] -ge 4) {
                 Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
                 Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
@@ -263,8 +260,12 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/etwenable-element (Doesn't specify. Assuming 3.0 or higher because it mentions Vista)
     https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/defaultproxy-element-network-settings (Doesn't specify.)
     #>
+    
+    #Ensuring current version has a machine.config to use
     If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+        #version testing
         If (($DotNetVersion -Split "v" )[1] -ge 2) {
+            #More version testing.
             If (($DotNetVersion -Split "v" )[1] -ge 4) {
                 Write-Host ".Net version 4 or higher... Continuing with v4.0+ Machine.conf Merge..." -ForegroundColor White -BackgroundColor Black
                 Set-SecureConfig -VersionPath "$($DotNetVersion.FullName)\Config\Machine.config" -SecureMachineConfigPath ".\Files\secure.machine-v4.config"
