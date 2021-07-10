@@ -31,8 +31,8 @@ You may download the required files from the [GitHub Repository](https://raw.git
 
 ## How to run the script
 
-**The script may be lauched from the extracted GitHub download like this:**
+**The script may be launched from the extracted GitHub download like this:**
 
-```
+```powershell
 .\sos-.net-4-stig.ps1
 ```
