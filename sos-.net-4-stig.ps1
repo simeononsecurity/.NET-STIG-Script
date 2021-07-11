@@ -56,16 +56,15 @@ New-PSDrive HKU Registry HKEY_USERS
 ForEach ($UserSID in (Get-ChildItem "HKU:\")) {
     Write-Output $UserSID.Name | ConvertFrom-String -Delimiter "\\" -PropertyNames "PATH", "SID" | Set-Variable -Name "SIDs"
     ForEach ($SID in $SIDs.SID) {
-        Write-Output $SID
          #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
             If (Test-Path -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\State") {
             Set-ItemProperty -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Value "0x23C00" -Force | Out-Null
-            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00" -ForegroundColor White -BackgroundColor Black
+            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00 for SID $SID" -ForegroundColor White -BackgroundColor Black
         }
         Else {
             New-Item -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Force | Out-Null
             New-ItemProperty -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Value "0x23C00" -Force | Out-Null
-            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00" -ForegroundColor White -BackgroundColor Black
+            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00 for SID $SID" -ForegroundColor White -BackgroundColor Black
         }
     }
 }
