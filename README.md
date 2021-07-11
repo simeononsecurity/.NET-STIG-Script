@@ -36,13 +36,13 @@ You may download the required files from the [GitHub Repository](https://raw.git
 ## How to run the script
 ### Manual Install:
 If manually downloaded, the script must be launched from an administrative powershell in the directory containing all the files from the [GitHub Repository](https://github.com/simeononsecurity/.NET-STIG-Script)
-```
+```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
 Get-ChildItem -Recurse *.ps1 | Unblock-File
 .\sos-.net-4-stig.ps1
 ```
 ### Automated Install:
 Use this one-liner to automatically download, unzip all supporting files, and run the latest version of the script.
-```
+```powershell
 iwr -useb 'https://simeononsecurity.ch/scripts/sosdotnet.ps1'|iex
 ```
