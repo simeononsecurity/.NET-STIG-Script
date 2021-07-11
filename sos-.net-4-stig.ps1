@@ -50,6 +50,28 @@ If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification") {
     Write-Output ".Net StrongName Verification Registry Removed"
 }
 
+#Vul ID: V-7061	   	Rule ID: SV-7444r3_rule   	STIG ID: APPNET0046
+#The Trust Providers Software Publishing State must be set to 0x23C00.
+New-PSDrive HKU Registry HKEY_USERS
+ForEach ($UserSID in (Get-ChildItem "HKU:\")) {
+    Write-Output $UserSID.Name | ConvertFrom-String -Delimiter "\\" -PropertyNames "PATH", "SID" | Set-Variable -Name "SIDs"
+    ForEach ($SID in $SIDs.SID) {
+        Write-Output $SID
+         #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
+            If (Test-Path -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\State") {
+            Set-ItemProperty -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Value "0x23C00" -Force | Out-Null
+            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00" -ForegroundColor White -BackgroundColor Black
+        }
+        Else {
+            New-Item -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Force | Out-Null
+            New-ItemProperty -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Value "0x23C00" -Force | Out-Null
+            Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00" -ForegroundColor White -BackgroundColor Black
+        }
+    }
+}
+[gc]::collect()
+
+
 <#
 Creating secure configuration Function. It needs to be called in the
 two foreach loops as it has to touch every config file in each
