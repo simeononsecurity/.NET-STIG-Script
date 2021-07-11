@@ -52,7 +52,7 @@ If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification") {
 
 #Vul ID: V-7061	   	Rule ID: SV-7444r3_rule   	STIG ID: APPNET0046
 #The Trust Providers Software Publishing State must be set to 0x23C00.
-New-PSDrive HKU Registry HKEY_USERS
+New-PSDrive HKU Registry HKEY_USERS | Out-Null
 ForEach ($UserSID in (Get-ChildItem "HKU:\")) {
     Write-Output $UserSID.Name | ConvertFrom-String -Delimiter "\\" -PropertyNames "PATH", "SID" | Set-Variable -Name "SIDs"
     ForEach ($SID in $SIDs.SID) {
