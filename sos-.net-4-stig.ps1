@@ -61,8 +61,8 @@ New-PSDrive HKU Registry HKEY_USERS | Out-Null
 ForEach ($UserSID in (Get-ChildItem "HKU:\")) {
     Write-Output $UserSID.Name | ConvertFrom-String -Delimiter "\\" -PropertyNames "PATH", "SID" | Set-Variable -Name "SIDs"
     ForEach ($SID in $SIDs.SID) {
-         #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
-            If (Test-Path -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\State") {
+        #Vul ID: V-30935	   	Rule ID: SV-40977r3_rule	   	STIG ID: APPNET0063
+        If (Test-Path -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\State") {
             Set-ItemProperty -Path "HKU:\$SID\Software\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing\" -Name "State" -Value "0x23C00" -Force | Out-Null
             Write-Host "Set Trust Providers Software Publishing State to 146432/0x23C00 for SID $SID" -ForegroundColor White -BackgroundColor Black
         }
@@ -174,8 +174,8 @@ Function Set-SecureConfig {
                         $MachineConfig.configuration.$SecureChildNode.AppendChild($NewNode) | Out-Null
                     }
                 
-                #Saving changes to XML file
-                $MachineConfig.Save($MachineConfigPath)               
+                    #Saving changes to XML file
+                    $MachineConfig.Save($MachineConfigPath)               
                 }#End else
             }#Foreach Element within SecureElements
         }#Else end for an if statement checking if the desired childnode is in the parent file
@@ -227,7 +227,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
     #>
     
     #Ensuring .net version has machine.config
-    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config") {
         #.net Version testing.
         If (($DotNetVersion -Split "v" )[1] -ge 2) {
             #.net version testing.
@@ -243,6 +243,9 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework32 -Directory)) {
         Else {
             Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
         }#End dotnet version test
+    }
+    Else {
+        Write-Host "No Machine.Conf file exists for .Net version $DotNetVersion" -ForegroundColor Red -BackgroundColor Black
     }#End testpath
 }
 
@@ -288,7 +291,7 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
     #>
     
     #Ensuring current version has a machine.config to use
-    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config"){
+    If (Test-Path "$($DotNetVersion.FullName)\Config\Machine.config") {
         #version testing
         If (($DotNetVersion -Split "v" )[1] -ge 2) {
             #More version testing.
@@ -304,6 +307,9 @@ ForEach ($DotNetVersion in (Get-ChildItem $netframework64 -Directory)) {
         Else {
             Write-Host ".Net version is less than 2... Skipping Machine.conf Merge..." -ForegroundColor Yellow -BackgroundColor Black
         }#End .net version test
+    }
+    Else {
+        Write-Host "No Machine.Conf file exists for .Net version $DotNetVersion" -ForegroundColor Red -BackgroundColor Black
     }#End testpath
 }
 
