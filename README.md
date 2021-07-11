@@ -2,15 +2,15 @@
 
 Applying the .NET STIG is definitely not straightforward. For many administrators it can take hours to fully implement on a single system. This script applies the required registry changes and modifies the machine.config file to implement FIPS and other controls as required.
 
-**Work in Progress**
-
-**DO NOT APPLY IN PRODUCTION**
-
 ## Notes:
 
-This script can not and will not ever get the .NET stig to 100% compliance. 
+This script can not and will not ever get the .NET stig to 100% compliance. Right now, as is, it stands to complete roughly 75% of the checks and does go back and complete the applicable checks on all previous .NET versions.
 
 Manual intervention is required for any .NET application or IIS Site.
+
+## Requirements: 
+- [X] Windows 7, Windows Server 2008 or newer
+- [X] Testing in your environment before running on production systems. 
 
 ## STIGS/SRGs Applied:
 
