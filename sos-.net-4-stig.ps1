@@ -43,11 +43,16 @@ if ((Get-Location).Path -NE $PSScriptRoot) { Set-Location $PSScriptRoot }
 $NetFramework32 = "C:\Windows\Microsoft.NET\Framework"
 $NetFramework64 = "C:\Windows\Microsoft.NET\Framework64"
 
+Write-Output "Beginning .NET STIG Script" -ForegroundColor Green -BackgroundColor Black
+
 #Vul ID: V-7055	   	Rule ID: SV-7438r3_rule	   	STIG ID: APPNET0031
 #Removing registry value
 If (Test-Path -Path "HKLM:\Software\Microsoft\StrongName\Verification") {
     Remove-Item "HKLM:\Software\Microsoft\StrongName\Verification" -Recurse -Force
     Write-Output ".Net StrongName Verification Registry Removed"
+} 
+Else {
+    Write-Output ".Net StrongName Verification Registry Does Not Exist" -ForegroundColor Green -BackgroundColor Black
 }
 
 #Vul ID: V-7061	   	Rule ID: SV-7444r3_rule   	STIG ID: APPNET0046
