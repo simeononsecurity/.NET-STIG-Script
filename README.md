@@ -8,6 +8,11 @@ This script can not and will not ever get the .NET stig to 100% compliance. Righ
 
 Manual intervention is required for any .NET application or IIS Site.
 
+## Ansible:
+We now offer a playbook collection for this script. Please see the following:
+- [Github Repo](https://github.com/simeononsecurity/Windows_STIG_Ansible)
+- [Ansible Galaxy](https://galaxy.ansible.com/simeononsecurity/windows_stigs)
+
 ## Requirements: 
 - [X] Windows 7, Windows Server 2008 or newer
 - [X] Testing in your environment before running on production systems. 
